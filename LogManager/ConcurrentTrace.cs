@@ -40,22 +40,6 @@ namespace LogManager
             }
         }
 
-        public static void Connect(string dbName, string collName)
-        {
-            if (Collection != null) new TraceStateException("Connection already established.");
-
-            var client = new MongoClient("mongodb://localhost:27017");
-            var database = client.GetDatabase(dbName);
-            Collection = database.GetCollection<Log>(collName);
-
-            Semaphore = new Semaphore(NumberOfBuffers, NumberOfBuffers);
-            Buffers = new LogBuffer[NumberOfBuffers];
-            for (int i = 0; i < NumberOfBuffers; i++)
-            {
-                Buffers[i] = new LogBuffer();
-            }
-        }
-
         /// <summary>
         /// Writes the log into the buffer.
         /// </summary>

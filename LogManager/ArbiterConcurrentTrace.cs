@@ -1,6 +1,5 @@
 ﻿using MongoDB.Driver;
 using MongoDB.Driver.Core.Clusters;
-using ArangoDB.Client;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,7 +21,6 @@ namespace LogManager
         private static readonly object critSec = new object();
         private static MongoClient client = null;
         private static IMongoCollection<Log> Collection = null;
-        private static IDocumentCollection<Log> arangoDB = null;
         private static Arbiter2 Arbiter = null;
 
         private static Timer timer = null;
@@ -63,10 +61,6 @@ namespace LogManager
             timer.Start();
         }
 
-      
-
-        
-
         [Conditional("TRACE_LOG")]
         private static void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -82,7 +76,7 @@ namespace LogManager
                 }
 
                 if (b.Count == 0) return;
-                arangoDB.InsertMultiple(b);
+
                 Collection.InsertMany(b);
                 Arbiter.Clear();
             }

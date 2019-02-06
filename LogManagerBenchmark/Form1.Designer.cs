@@ -92,9 +92,7 @@
             this.cbxDatabase.FormattingEnabled = true;
             this.cbxDatabase.Items.AddRange(new object[] {
             "MongoDB",
-            "ArangoDB",
-            "ElasticSearch",
-            "CouchDB"});
+            "Internal LiteDb"});
             this.cbxDatabase.Location = new System.Drawing.Point(94, 65);
             this.cbxDatabase.Name = "cbxDatabase";
             this.cbxDatabase.Size = new System.Drawing.Size(100, 21);
