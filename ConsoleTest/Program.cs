@@ -19,7 +19,10 @@ namespace ConsoleTest
             double avg = 0;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of 79ede7c... adjusted classes for benchmark
             const int NLOGS = 10;
 
 >>>>>>> parent of 79ede7c... adjusted classes for benchmark
@@ -48,6 +51,7 @@ namespace ConsoleTest
         static void Main(string[] args)
         {
 <<<<<<< HEAD
+<<<<<<< HEAD
             //MongoDB
             //ArbiterConcurrentTrace.BufferSize = 256;
             //ArbiterConcurrentTrace.NumberOfBuffers = 64;
@@ -65,11 +69,19 @@ namespace ConsoleTest
             ArbiterConcurrentTrace.BufferSize = 10;
             ArbiterConcurrentTrace.NumberOfBuffers = 5;
 
+=======
+            ArbiterConcurrentTrace.BufferSize = 10;
+            ArbiterConcurrentTrace.NumberOfBuffers = 5;
+
+>>>>>>> parent of 79ede7c... adjusted classes for benchmark
             ArbiterConcurrentTrace.Connect("TestConcurrent2");
             List<Task> tasks = new List<Task>();
             Stopwatch s = new Stopwatch();
             s.Start();
             for (int i = 0; i < 10; i++)
+<<<<<<< HEAD
+>>>>>>> parent of 79ede7c... adjusted classes for benchmark
+=======
 >>>>>>> parent of 79ede7c... adjusted classes for benchmark
             {
                 List<Task> tasks = new List<Task>();
