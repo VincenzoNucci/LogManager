@@ -12,13 +12,12 @@ namespace ConsoleTest
 {
     class Program
     {
-        static ConcurrentDictionary<Guid, double> AvgDict = new ConcurrentDictionary<Guid, double>();
-
+        static List<long> AvgDict = new List<long>();
+        const int NLOGS = 50;
+        const int NTHREADS = 50;
         static void Print()
         {
             double avg = 0;
-
-            const int NLOGS = 50;
 
             Random r = new Random();
 
@@ -34,43 +33,59 @@ namespace ConsoleTest
 
                 stopw.Stop();
                 long finish = stopw.ElapsedMilliseconds;
-                avg += finish;
+                AvgDict.Add(finish);
+                //avg += finish;
             }
 
-            avg = avg / NLOGS;
-            AvgDict.GetOrAdd(Guid.NewGuid(), avg);
+            //avg = avg / NLOGS;
+            //AvgDict.GetOrAdd(Guid.NewGuid(), avg);
 
         }
 
         static void Main(string[] args)
         {
-            //ArbiterConcurrentTrace.BufferSize = 10;
-            //ArbiterConcurrentTrace.NumberOfBuffers = 5;
+            //MongoDB
+            //ArbiterConcurrentTrace.BufferSize = 256;
+            //ArbiterConcurrentTrace.NumberOfBuffers = 64;
 
+            //ArangoDB
             ArbiterConcurrentTraceArangoDB.BufferSize = 256;
             ArbiterConcurrentTraceArangoDB.NumberOfBuffers = 64;
 
-            //ArbiterConcurrentTrace.Connect("TestConcurrent2");
+
+            //ArbiterConcurrentTrace.Connect("logs");
             ArbiterConcurrentTraceArangoDB.Connect("logs");
-            List<Task> tasks = new List<Task>();
-            Stopwatch s = new Stopwatch();
-            s.Start();
-            for (int i = 0; i < 50; i++)
+
+            for (int tries = 0; tries < 10; tries++)
             {
-                tasks.Add(Task.Factory.StartNew(Print));
+                List<Task> tasks = new List<Task>();
+                Stopwatch s = new Stopwatch();
+                s.Start();
+                for (int i = 0; i < NTHREADS; i++)
+                {
+                    tasks.Add(Task.Factory.StartNew(Print));
+                }
+
+                Task.WaitAll(tasks.ToArray());
+                s.Stop();
+                long time1 = s.ElapsedMilliseconds;
+                s.Reset();
+                Console.WriteLine("time to write all the logs to the buffers at step " + tries + " : " + time1);
+                
+                s.Start();
+                //ArbiterConcurrentTrace.Flush();
+                ArbiterConcurrentTraceArangoDB.Flush();
+                s.Stop();
+                long time2 = s.ElapsedMilliseconds;
+                s.Reset();
+                Console.WriteLine("time to flush everything at step " + tries + ": " + time2);
+                AvgDict.Add(time1);
+                AvgDict.Add( time2);
+                using (StreamWriter file = new StreamWriter("D:\\ArbiterConcurrentTrace_benchmarkArangoDB["+tries+"].txt"))
+                    for (var k = 0; k < AvgDict.Count; k++)
+                        file.WriteLine(AvgDict[k].ToString());
+                AvgDict.Clear();
             }
-
-            Task.WaitAll(tasks.ToArray());
-            s.Stop();
-            long time = s.ElapsedMilliseconds;
-            Console.WriteLine(time);
-            //ArbiterConcurrentTrace.Flush();
-            ArbiterConcurrentTraceArangoDB.Flush();
-
-            using (StreamWriter file = new StreamWriter("D:\\ArbiterConcurrentTrace_benchmarkArangoDB.txt"))
-                foreach (var entry in AvgDict)
-                    file.WriteLine("{0} , {1}", entry.Key.ToString().Substring(0,4) , entry.Value.ToString().Replace(',','.'));
-
             Console.WriteLine("done");
             Console.ReadLine();
 
