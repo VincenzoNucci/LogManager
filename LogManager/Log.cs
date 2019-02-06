@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ArangoDB.Client;
 using MongoDB.Bson;
 
 namespace LogManager
@@ -13,7 +14,8 @@ namespace LogManager
     /// </summary>
     public class Log
     {
-        public ObjectId Id { get; set; }
+        [DocumentProperty(Identifier = IdentifierType.Key)]
+        public string Id { get; set; }
         public LogLevel Level { get; set; }
         public DateTime TimeStamp { get; set; }
         public Origin Origin { get; set; }
@@ -31,7 +33,7 @@ namespace LogManager
 
         public Log(LogLevel Level, DateTime TimeStamp, Origin Origin, string Message)
         {
-            this.Id = ObjectId.GenerateNewId();
+            this.Id = Guid.NewGuid().ToString();
             this.Level = Level;
             this.TimeStamp = TimeStamp;
             this.Origin = Origin;

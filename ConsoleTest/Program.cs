@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define TRACE_LOG
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,7 +18,7 @@ namespace ConsoleTest
         {
             double avg = 0;
 
-            const int NLOGS = 10;
+            const int NLOGS = 50;
 
             Random r = new Random();
 
@@ -28,7 +29,8 @@ namespace ConsoleTest
                 Log l = new Log(LogLevel.DEBUG, "This is a test log");
                 stopw.Restart();
 
-                ArbiterConcurrentTrace.Write(l);
+                //ArbiterConcurrentTrace.Write(l);
+                ArbiterConcurrentTraceArangoDB.Write(l);
 
                 stopw.Stop();
                 long finish = stopw.ElapsedMilliseconds;
@@ -42,14 +44,18 @@ namespace ConsoleTest
 
         static void Main(string[] args)
         {
-            ArbiterConcurrentTrace.BufferSize = 10;
-            ArbiterConcurrentTrace.NumberOfBuffers = 5;
+            //ArbiterConcurrentTrace.BufferSize = 10;
+            //ArbiterConcurrentTrace.NumberOfBuffers = 5;
 
-            ArbiterConcurrentTrace.Connect("TestConcurrent2");
+            ArbiterConcurrentTraceArangoDB.BufferSize = 256;
+            ArbiterConcurrentTraceArangoDB.NumberOfBuffers = 64;
+
+            //ArbiterConcurrentTrace.Connect("TestConcurrent2");
+            ArbiterConcurrentTraceArangoDB.Connect("logs");
             List<Task> tasks = new List<Task>();
             Stopwatch s = new Stopwatch();
             s.Start();
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 50; i++)
             {
                 tasks.Add(Task.Factory.StartNew(Print));
             }
@@ -58,11 +64,12 @@ namespace ConsoleTest
             s.Stop();
             long time = s.ElapsedMilliseconds;
             Console.WriteLine(time);
-            ArbiterConcurrentTrace.Flush();
+            //ArbiterConcurrentTrace.Flush();
+            ArbiterConcurrentTraceArangoDB.Flush();
 
-            //using (StreamWriter file = new StreamWriter("ArbiterConcurrentTrace_benchmark.txt"))
-                //foreach (var entry in AvgDict)
-                    //file.WriteLine("{0} , {1}", entry.Key.ToString().Substring(0,4) , entry.Value.ToString().Replace(',','.'));
+            using (StreamWriter file = new StreamWriter("D:\\ArbiterConcurrentTrace_benchmarkArangoDB.txt"))
+                foreach (var entry in AvgDict)
+                    file.WriteLine("{0} , {1}", entry.Key.ToString().Substring(0,4) , entry.Value.ToString().Replace(',','.'));
 
             Console.WriteLine("done");
             Console.ReadLine();

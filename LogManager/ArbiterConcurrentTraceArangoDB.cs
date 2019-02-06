@@ -1,5 +1,4 @@
-﻿using MongoDB.Driver;
-using MongoDB.Driver.Core.Clusters;
+﻿#define TRACE_LOG
 using ArangoDB.Client;
 using System;
 using System.Collections;
@@ -11,18 +10,19 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
+
+
 namespace LogManager
 {
-    public static class ArbiterConcurrentTrace
+    public static class ArbiterConcurrentTraceArangoDB
     {
         public static int BufferSize = 256;
         public static int NumberOfBuffers = 64;
 
         private volatile static LogBuffer[] Buffers = null;
         private static readonly object critSec = new object();
-        private static MongoClient client = null;
-        private static IMongoCollection<Log> Collection = null;
-        private static IDocumentCollection<Log> arangoDB = null;
+        private static IArangoDatabase client = null;
+        private static IDocumentCollection Collection = null;
         private static Arbiter2 Arbiter = null;
 
         private static Timer timer = null;
@@ -36,16 +36,30 @@ namespace LogManager
         {
             if (Collection != null) throw new TraceStateException("Connection already established.");
 
-            client = new MongoClient("mongodb://localhost:27017");
+            ArangoDatabase.ChangeSetting(s =>
+            {
+                s.Database = "test";
+                s.Url = "http://localhost:8529";
+
+                // you can set other settings if you need
+                s.Credential = new NetworkCredential("root", "");
+                s.SystemDatabaseCredential = new NetworkCredential("root", "");
+            });
+
+            client = ArangoDatabase.CreateWithSetting();
+
+            //client.CreateDatabase(Dns.GetHostName());
+            
 
             //just to update the description state
             var databases = client.ListDatabases();
 
-            if (client.Cluster.Description.State == ClusterState.Disconnected)
+            if (client.Connection == null)
                 throw new TraceStateException("Local db is unreachable.");
 
-            var database = client.GetDatabase(Dns.GetHostName());
-            Collection = database.GetCollection<Log>(collectionName);
+            //client.CreateCollection("logggs");
+
+            Collection = client.Collection(collectionName);
 
             Buffers = new LogBuffer[NumberOfBuffers];
             for (int i = 0; i < NumberOfBuffers; i++)
@@ -63,14 +77,12 @@ namespace LogManager
             timer.Start();
         }
 
-      
-
         
 
         [Conditional("TRACE_LOG")]
         private static void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            if (client == null || client.Connection == null)
                 throw new TraceStateException("No connection to local db.");
 
             lock (critSec)
@@ -82,8 +94,7 @@ namespace LogManager
                 }
 
                 if (b.Count == 0) return;
-                arangoDB.InsertMultiple(b);
-                Collection.InsertMany(b);
+                Collection.InsertMultiple(b);
                 Arbiter.Clear();
             }
         }
@@ -95,7 +106,7 @@ namespace LogManager
         [Conditional("TRACE_LOG")]
         public static void Write(Log log)
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            if (client == null || client.Connection == null)
                 throw new TraceStateException("No connection to local db.");
 
             LogBuffer freeBuffer = Arbiter.Wait();
@@ -111,7 +122,7 @@ namespace LogManager
         [Conditional("TRACE_LOG")]
         public static void Flush()
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            if (client == null || client.Connection == null)
                 throw new TraceStateException("No connection to local db.");
 
             lock (critSec)
@@ -125,7 +136,7 @@ namespace LogManager
 
                 if (b.Count == 0) return;
 
-                Collection.InsertMany(b);
+                Collection.InsertMultiple(b);
                 Arbiter.Clear();
                 timer.Start();
             }
