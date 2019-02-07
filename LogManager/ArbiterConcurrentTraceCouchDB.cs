@@ -1,6 +1,4 @@
-﻿using MongoDB.Driver;
-using MongoDB.Driver.Core.Clusters;
-using ArangoDB.Client;
+﻿using MyCouch;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,16 +11,15 @@ using System.Timers;
 
 namespace LogManager
 {
-    public static class ArbiterConcurrentTrace
+    public static class ArbiterConcurrentTraceCouchDB
     {
         public static int BufferSize = 256;
         public static int NumberOfBuffers = 64;
 
         private volatile static LogBuffer[] Buffers = null;
         private static readonly object critSec = new object();
-        private static MongoClient client = null;
-        private static IMongoCollection<Log> Collection = null;
-        private static IDocumentCollection<Log> arangoDB = null;
+        private static MyCouchClient client = null;
+        private static IEntities Collection = null;
         private static Arbiter2 Arbiter = null;
 
         private static Timer timer = null;
@@ -36,16 +33,17 @@ namespace LogManager
         {
             if (Collection != null) throw new TraceStateException("Connection already established.");
 
-            client = new MongoClient("mongodb://localhost:27017");
+            client = new MyCouchClient("http://root:root@localhost:5984","test");
+
 
             //just to update the description state
-            var databases = client.ListDatabases();
+            var databases = client.Database.GetAsync();
 
-            if (client.Cluster.Description.State == ClusterState.Disconnected)
+            if (client.Connection == null)
                 throw new TraceStateException("Local db is unreachable.");
 
-            var database = client.GetDatabase(Dns.GetHostName());
-            Collection = database.GetCollection<Log>(collectionName);
+
+            Collection = client.Entities;
 
             Buffers = new LogBuffer[NumberOfBuffers];
             for (int i = 0; i < NumberOfBuffers; i++)
@@ -70,7 +68,7 @@ namespace LogManager
         [Conditional("TRACE_LOG")]
         private static void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            if (client == null || client.Connection == null)
                 throw new TraceStateException("No connection to local db.");
 
             lock (critSec)
@@ -82,8 +80,9 @@ namespace LogManager
                 }
 
                 if (b.Count == 0) return;
-                arangoDB.InsertMultiple(b);
-                Collection.InsertMany(b);
+
+                foreach (Log l in b)
+                    Collection.PostAsync<Log>(l);
                 Arbiter.Clear();
             }
         }
@@ -95,7 +94,7 @@ namespace LogManager
         [Conditional("TRACE_LOG")]
         public static void Write(Log log)
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            if (client == null || client.Connection == null)
                 throw new TraceStateException("No connection to local db.");
 
             LogBuffer freeBuffer = Arbiter.Wait();
@@ -111,7 +110,7 @@ namespace LogManager
         [Conditional("TRACE_LOG")]
         public static void Flush()
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            if (client == null || client.Connection == null)
                 throw new TraceStateException("No connection to local db.");
 
             lock (critSec)
@@ -125,7 +124,8 @@ namespace LogManager
 
                 if (b.Count == 0) return;
 
-                Collection.InsertMany(b);
+                foreach (Log l in b)
+                    Collection.PostAsync<Log>(l);
                 Arbiter.Clear();
                 timer.Start();
             }

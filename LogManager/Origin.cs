@@ -16,7 +16,7 @@ namespace LogManager
     public class Origin
     {
         public string IdDevice { get; private set; }
-        public IPAddress IPAddress { get; private set; }
+        public string IPAddress { get; private set; }
         public int ProcId { get; private set; }
         public int ThreadId { get; private set; }
 
@@ -35,7 +35,7 @@ namespace LogManager
             {
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
                 {
-                    IPAddress =  ip;
+                    IPAddress = ip.ToString();
                 }
             }
 

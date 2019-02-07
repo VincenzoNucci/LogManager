@@ -171,22 +171,24 @@ namespace LogManagerBenchmark
             switch(cbxTraceClass.SelectedIndex)
             {
                 case 0: //Trace class
-                    Trace.Buffers = (int)nudBuffers.Value;
-                    Trace.BufferSize = (int)nudBufferSize.Value;
-                    Trace.Connect(txtConnectionString.Text, cBoxDatabase.Text, cBoxCollection.Text);
-                    traceSelected = true;
+                    //Trace.Buffers = (int)nudBuffers.Value;
+                    //Trace.BufferSize = (int)nudBufferSize.Value;
+                    //Trace.Connect(txtConnectionString.Text, cBoxDatabase.Text, cBoxCollection.Text);
+                    traceSelected = false;
                 break;
 
                 case 1: //Concurrent trace class
                     ConcurrentTrace.NumberOfBuffers = (int)nudBuffers.Value;
                     ConcurrentTrace.BufferSize = (int)nudBufferSize.Value;
-                    ConcurrentTrace.Connect(txtConnectionString.Text, cBoxDatabase.Text, cBoxCollection.Text);
+                    ConcurrentTrace.Connect(cBoxDatabase.Text, cBoxCollection.Text);
                     traceSelected = true;
                 break;
 
-                case 2: //Timed concurrent trace class
-                    MessageBox.Show("Not implemented");
-                    traceSelected = false;
+                case 2: //Arbiter concurrent trace class
+                    ArbiterConcurrentTrace.NumberOfBuffers = (int)nudBuffers.Value;
+                    ArbiterConcurrentTrace.BufferSize = (int)nudBufferSize.Value;
+                    ArbiterConcurrentTrace.Connect(cBoxDatabase.Text, cBoxCollection.Text);
+                    traceSelected = true;
                     break;
 
                 default:
