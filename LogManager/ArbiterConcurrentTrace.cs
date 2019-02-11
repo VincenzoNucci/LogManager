@@ -39,10 +39,10 @@ namespace LogManager
             client = new MongoClient("mongodb://localhost:27017");
 
             //just to update the description state
-            var databases = client.ListDatabases();
+            //var databases = client.ListDatabases();
 
-            if (client.Cluster.Description.State == ClusterState.Disconnected)
-                throw new TraceStateException("Local db is unreachable.");
+            //if (client.Cluster.Description.State == ClusterState.Disconnected)
+            //    throw new TraceStateException("Local db is unreachable.");
 
             var database = client.GetDatabase(Dns.GetHostName());
             Collection = database.GetCollection<Log>(collectionName);
@@ -70,8 +70,8 @@ namespace LogManager
         [Conditional("TRACE_LOG")]
         private static void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
-                throw new TraceStateException("No connection to local db.");
+            //if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            //    throw new TraceStateException("No connection to local db.");
 
             lock (critSec)
             {
@@ -82,7 +82,6 @@ namespace LogManager
                 }
 
                 if (b.Count == 0) return;
-                arangoDB.InsertMultiple(b);
                 Collection.InsertMany(b);
                 Arbiter.Clear();
             }
@@ -95,8 +94,8 @@ namespace LogManager
         [Conditional("TRACE_LOG")]
         public static void Write(Log log)
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
-                throw new TraceStateException("No connection to local db.");
+            //if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            //    throw new TraceStateException("No connection to local db.");
 
             LogBuffer freeBuffer = Arbiter.Wait();
 
@@ -111,8 +110,8 @@ namespace LogManager
         [Conditional("TRACE_LOG")]
         public static void Flush()
         {
-            if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
-                throw new TraceStateException("No connection to local db.");
+            //if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
+            //    throw new TraceStateException("No connection to local db.");
 
             lock (critSec)
             {
