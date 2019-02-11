@@ -16,7 +16,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;TRACE_LOG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -26,7 +26,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;TRACE_LOG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -165,17 +165,19 @@
   <ItemGroup>
     <Compile Include="AbstractCollection.cs" />
     <Compile Include="Arbiter.cs" />
+<<<<<<< HEAD
     <Compile Include="Arbiter2.cs" />
     <Compile Include="ArbiterConcurrentTraceLiteDB.cs" />
     <Compile Include="ArbiterConcurrentTraceCouchDB.cs" />
     <Compile Include="ArbiterConcurrentTraceArangoDB.cs" />
+=======
+    <Compile Include="IClearable.cs" />
+>>>>>>> upstream/master
     <Compile Include="LogBuffer.cs" />
     <Compile Include="LogBufferSizeExceededException.cs" />
-    <Compile Include="ConcurrentTrace.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="LogLevel.cs" />
     <Compile Include="Origin.cs" />
-    <Compile Include="ArbiterConcurrentTrace.cs" />
     <Compile Include="Trace.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TraceStateException.cs" />

@@ -9,15 +9,21 @@ namespace LogManager
     /// <summary>
     /// Data structue for cacheing logs
     /// </summary>
-    internal class LogBuffer
+    internal class LogBuffer : IClearable
     {
-        public bool InUse { get; set; }
-        public bool Full { get; private set; }
         public delegate void BufferFilled(Log log);
+        /// <summary>
+        /// Event raised when the buffer becomes full.
+        /// </summary>
         public event BufferFilled OnBufferFill;
 
-        public int CurrentIndex { get; private set; }
+        private int CurrentIndex = 0;
+        private bool Full;
         private Log[] _logs { get; set; }
+
+        /// <summary>
+        /// Get all the logs stored in the buffer.
+        /// </summary>
         public Log[] Logs
         {
             get
@@ -26,12 +32,14 @@ namespace LogManager
             }
         }
 
+        /// <summary>
+        /// Creates a new instance of the LogBuffer class.
+        /// </summary>
         public LogBuffer()
         {
-            InUse = false;
             Full = false;
             CurrentIndex = 0;
-            _logs = new Log[ArbiterConcurrentTrace.BufferSize];
+            _logs = new Log[Trace.BufferSize];
         }
 
         /// <summary>
@@ -40,14 +48,13 @@ namespace LogManager
         /// <param name="log">The log to be added</param>
         public void Add(Log log)
         {
-            if (CurrentIndex >= ArbiterConcurrentTrace.BufferSize) throw new LogBufferSizeExceededException($"Tried to add a Log into a filled buffer of size {ArbiterConcurrentTrace.BufferSize}.");
+            if (CurrentIndex >= Trace.BufferSize) throw new LogBufferSizeExceededException($"Tried to add a Log into a filled buffer of size {Trace.BufferSize}.");
 
-            int l = _logs.Length;
             _logs[CurrentIndex] = log;
 
             CurrentIndex++;
 
-            if (CurrentIndex == ArbiterConcurrentTrace.BufferSize)
+            if (CurrentIndex == Trace.BufferSize)
             {
                 Full = true;
                 if (OnBufferFill != null)
@@ -64,8 +71,24 @@ namespace LogManager
         public void Clear()
         {
             CurrentIndex = 0;
-            _logs = new Log[ArbiterConcurrentTrace.BufferSize];
+            _logs = new Log[Trace.BufferSize];
             Full = false;
+        }
+
+        /// <summary>
+        /// Get if the buffer is full or not.
+        /// </summary>
+        public bool IsFull()
+        {
+            return Full;
+        }
+
+        /// <summary>
+        /// Get if the buffer is empty or not.
+        /// </summary>
+        public bool IsEmpty()
+        {
+            return CurrentIndex == 0;
         }
     }
 }

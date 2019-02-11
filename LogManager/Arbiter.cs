@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,61 +9,79 @@ using System.Threading.Tasks;
 
 namespace LogManager
 {
-    internal class Arbiter
+    /// <summary>
+    /// Handles concurrency between multiple threads and multiple resources.
+    /// </summary>
+    /// <typeparam name="T">The type of resources</typeparam>
+    internal class Arbiter<T> where T : class, IClearable
     {
-        public int Threads { get; private set; }
+        public delegate void AllResourcesFilled();
+        /// <summary>
+        /// Event raised when there is no resource available.
+        /// </summary>
+        public event AllResourcesFilled OnAllResourcesFilled;
 
-        public delegate void AllBuffersFilled();
-        public event AllBuffersFilled OnAllBuffersFilled;
+        private ConcurrentQueue<T> Resources = null;
+        private int ResourcesSize = 0;
+        private ConcurrentQueue<T> FullResources = null;
 
-        private Queue<LogBuffer> Resources = null;
-        private int bufferSize = 0;
-        private Queue<LogBuffer> FullResources = null;
-        private readonly object critSec = new object();
-
-        public Arbiter(IEnumerable<LogBuffer> resources)
+        /// <summary>
+        /// Createes a new instances of the Arbiter class.
+        /// </summary>
+        /// <param name="resources">The initial resources</param>
+        public Arbiter(IEnumerable<T> resources)
         {
-            Resources = new Queue<LogBuffer>(resources);
-            FullResources = new Queue<LogBuffer>();
-            bufferSize = Resources.Count;
+            Resources = new ConcurrentQueue<T>(resources);
+            FullResources = new ConcurrentQueue<T>();
+            ResourcesSize = Resources.Count;
         }
 
-        public LogBuffer Wait()
+        /// <summary>
+        /// Wait until a resource becomes available and returns it.
+        /// </summary>
+        public T Wait()
         {
-            LogBuffer logBuf = null;
-            lock (critSec)
-            {
-                while(Resources.Count == 0)
-                {
-                    Thread.Sleep(2);
-                }
-                logBuf = Resources.Dequeue();
+            T resource = null;
 
-            }
-            return logBuf; 
+            while (!Resources.TryDequeue(out resource))
+                Thread.Sleep(2);
+
+            return resource;
         }
 
-        public void Release(LogBuffer logBuf)
+        /// <summary>
+        /// Releases a resource.
+        /// </summary>
+        /// <param name="resource">The resource to be released</param>
+        public void Release(T resource)
         {
-            lock (critSec)
+            if (resource.IsFull())
+                FullResources.Enqueue(resource);
+            else
+                Resources.Enqueue(resource);
+
+            if (FullResources.Count == ResourcesSize)
             {
-
-                if (logBuf.Full)
-                    FullResources.Enqueue(logBuf);
-                else
-                    Resources.Enqueue(logBuf);
-
-                if (FullResources.Count == bufferSize)
+                OnAllResourcesFilled();
+                for (int i = 0; i < ResourcesSize; i++)
                 {
-                    OnAllBuffersFilled();
-                    for (int i = 0; i < bufferSize; i++)
-                    {
-                        LogBuffer buff = FullResources.Dequeue();
-                        buff.Clear();
-                        Resources.Enqueue(buff);
-                    }
+                    T res = null;
+                    FullResources.TryDequeue(out res);
+                    res.Clear();
+                    Resources.Enqueue(res);
                 }
             }
+        }
+
+        /// <summary>
+        /// Get all the non empty resources.
+        /// </summary>
+        public IEnumerable<T> GetNonEmptyResources()
+        {
+            List<T> res = Resources.Where(r => !r.IsFull()).ToList();
+            res.AddRange(FullResources.ToList());
+
+            return res;
         }
 
     }

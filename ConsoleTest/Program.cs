@@ -12,6 +12,7 @@ namespace ConsoleTest
 {
     class Program
     {
+<<<<<<< HEAD
         static ConcurrentDictionary<Guid, double> AvgDict = new ConcurrentDictionary<Guid, double>();
         const int NLOGS = 1000;
         const int NTHREADS = 50;
@@ -39,15 +40,22 @@ namespace ConsoleTest
                 stopw.Stop();
                 long finish = stopw.ElapsedMilliseconds;
                 avg += finish;
+=======
+        static void Print()
+        {
+            const int NLOGS = 200;
+            for (int i = 0; i < NLOGS; i++)
+            {
+
+                Log l = new Log(LogLevel.DEBUG, "This is a test log");
+                LogManager.Trace.Write(l);
+>>>>>>> upstream/master
             }
-
-            avg = avg / NLOGS;
-            AvgDict.GetOrAdd(Guid.NewGuid(), avg);
-
         }
 
         static void Main(string[] args)
         {
+<<<<<<< HEAD
             ArbiterConcurrentTrace.BufferSize = 256;
             ArbiterConcurrentTrace.NumberOfBuffers = 64;
 
@@ -99,6 +107,29 @@ namespace ConsoleTest
                 }
                 AvgDict.Clear();
             }
+=======
+            LogManager.Trace.Connect("TestConcurrent2");
+
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < 100; i++)
+            {
+                tasks.Add(Task.Factory.StartNew(Print));
+            }
+
+            Stopwatch s = new Stopwatch();
+
+            s.Start();
+
+            Task.WaitAll(tasks.ToArray());
+
+            s.Stop();
+
+            long time = s.ElapsedMilliseconds;
+
+            Console.WriteLine(time);
+
+            LogManager.Trace.Flush();
+>>>>>>> upstream/master
 
             Console.WriteLine("done");
             Console.ReadLine();
