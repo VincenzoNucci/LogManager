@@ -19,9 +19,6 @@ namespace LogManager
         /// Get the id of the device.
         /// </summary>
         public string IdDevice { get; private set; }
-<<<<<<< HEAD
-        public string IPAddress { get; private set; }
-=======
 
         /// <summary>
         /// Get the ip address of the device.
@@ -31,7 +28,6 @@ namespace LogManager
         /// <summary>
         /// Get the pid of the process.
         /// </summary>
->>>>>>> upstream/master
         public int ProcId { get; private set; }
 
         /// <summary>
@@ -68,7 +64,7 @@ namespace LogManager
             {
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
                 {
-                    IPAddress = ip.ToString();
+                    IPAddress =  ip;
                 }
             }
 
