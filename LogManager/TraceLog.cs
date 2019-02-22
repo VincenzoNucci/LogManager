@@ -35,7 +35,7 @@ namespace LogManager
 
         private static readonly object critSec = new object();
         private static MongoClient client = null;
-        private static IMongoCollection<Log> Collection = null;
+        public static IMongoCollection<Log> Collection = null;
         private static Arbiter<LogBuffer> Arbiter = null;
 
         private static Timer timer = null;
@@ -96,12 +96,12 @@ namespace LogManager
         {
             if (client == null || client.Cluster.Description.State == ClusterState.Disconnected)
                 throw new TraceLogStateException("No connection to local db.");
-           
+
             LogBuffer freeBuffer = Arbiter.Wait();
-            
+
 
             freeBuffer.Add(log);
-            
+
 
             Arbiter.Release(freeBuffer);
         }
@@ -118,9 +118,9 @@ namespace LogManager
             {
                 bd = Collection.Database.RunCommand<BsonDocument>(bdc);
             }
-                catch(MongoCommandException e)
+            catch (MongoCommandException e)
             {
-                
+
             }
             //Console.WriteLine("bd: " + bd.ToJson());
             long size = bd["size"].ToInt64();
@@ -133,7 +133,7 @@ namespace LogManager
             List<string> collectionsName = new List<string>();
             List<BsonDocument> collections = new List<BsonDocument>();
             var cursor = Collection.Database.ListCollections();
-            while(cursor.MoveNext())
+            while (cursor.MoveNext())
             {
                 collections.AddRange(cursor.Current);
             }
@@ -142,7 +142,7 @@ namespace LogManager
             collections.ForEach(_ => {
                 collectionsName.Add(_["name"].ToString());
             });
-            foreach(string s in collectionsName)
+            foreach (string s in collectionsName)
             {
                 tmpDocuments.AddRange(Collection.Database.GetCollection<Log>(s).Find(_ => true).ToList<Log>());
             }
@@ -164,12 +164,13 @@ namespace LogManager
                 foreach (string s in collectionsName)
                 {
                     //o la pulisce ma la lascia nel db
-                    Collection.Database.GetCollection<Log>(s).DeleteMany(_ => true);
+                    //Collection.Database.GetCollection<Log>(s).DeleteMany(_ => true);
                     //o la toglie direttamente, scegli tu
                     Collection.Database.DropCollection(s);
                 }
                 return true;
-            } catch (MongoBulkWriteException e)
+            }
+            catch (MongoBulkWriteException e)
             {
                 return false;
             }
@@ -189,7 +190,7 @@ namespace LogManager
                 timer.Stop();
                 List<Log> b = new List<Log>();
                 IEnumerable<LogBuffer> logs = Arbiter.GetNonEmptyResources();
-                
+
                 foreach (LogBuffer logBuff in logs)
                 {
                     b.AddRange(logBuff.Logs);
@@ -202,12 +203,13 @@ namespace LogManager
                     Arbiter.ClearResources();
                     timer.Start();
                     return b.Count;
-                } catch(MongoBulkWriteException e)
+                }
+                catch (MongoBulkWriteException e)
                 {
                     timer.Start();
                     return b.Count;
                 }
-                
+
             }
         }
     }
