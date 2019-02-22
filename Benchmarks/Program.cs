@@ -88,11 +88,11 @@ namespace Benchmarks
             //while (!u200.IsFinished()) ;
             //while (!t.IsFinished()) ;
 
-            TraceLog.Connect("TestConcurrent1");
-            //var t = new BenchmarkMaxTimeFullBuffers(1, 1000, TraceLog.FlushInterval.TotalMilliseconds, 0, 100000000, "TestConcurrent100");
-            TraceLog.CloneCollections("localhost", 27017, "server", "clone");
+            var t = new BenchmarkMaxTimeFullBuffers(1, 1000, TraceLog.FlushInterval.TotalMilliseconds, 0, 100000000, "TestConcurrent102");
+            //TraceLog.CloneCollections("localhost", 27017, "server", "clone");
+            //var t = new BenchmarkSendToServer(1, 1000, TraceLog.FlushInterval.TotalMilliseconds, "192.168.1.6", 27017);
             Console.WriteLine("done");
-            
+
             /*var psi = new ProcessStartInfo("shutdown", "/s /t 0");
             psi.CreateNoWindow = true;
             psi.UseShellExecute = false;

@@ -17,6 +17,7 @@ namespace Benchmarks
         public StreamWriter sw = null;
         public System.Timers.Timer timer = new System.Timers.Timer();
         public bool stopCriterionReached = false;
+        public string path = @"D:\[]- Benchmark3NUOVO.txt";
 
         public long StartingDBSize { get; set; }
         public long TargetDBSize { get; set; }
@@ -34,7 +35,7 @@ namespace Benchmarks
             long t = LogManager.TraceLog.CurrentDBSize();
             PreviousBatchSize += batchSize;
 
-            sw.WriteLine(batchSize + ", " + time + ", " + t);
+            sw.WriteLine(batchSize + ", " + time.ToString().Replace(",", ".") + ", " + t);
             Console.WriteLine("flushed " + batchSize + " logs in " + time + " ms with size: " + t + " bytes");
 
             if (t > this.TargetDBSize)
@@ -59,10 +60,10 @@ namespace Benchmarks
             PreviousBatchSize = 0;
             if (sw == null)
             {
-                sw = new StreamWriter(@"F:\[T-" + this.ThreadNumber + ", L-" + this.MaxLogs + ", R-" + this.Resolution + ", S-" + this.StartingDBSize + ", Ta-" + this.TargetDBSize + "]- BenchmarkFlushTimeSize.txt");
+                //sw = new StreamWriter(@"D:\[T-" + this.ThreadNumber + ", L-" + this.MaxLogs + ", R-" + this.Resolution + ", S-" + this.StartingDBSize + ", Ta-" + this.TargetDBSize + "]- BenchmarkFlushTimeSize.txt");
             }
 
-            sw.WriteLine("batchSize,time,Currentsize");
+            File.AppendAllText(path, "batchSize,time,Currentsize\n");
 
             Start(collectionName);
         }
@@ -83,7 +84,8 @@ namespace Benchmarks
             {
 
             }
-
+            TraceLog.Write(new Log(LogLevel.CRITICAL, ""));
+            TraceLog.Flush();
             //collection has not the preferred size to operate with
             if (TraceLog.CurrentDBSize() < StartingDBSize)
             {
@@ -140,39 +142,32 @@ namespace Benchmarks
         {
             int timeToSleep = 0;
             int j = 0;
-            const int STEP = 100;
+            const int STEP = 64;
             long i = 0;
-            while (!stopCriterionReached)
+            for (int h = 0; h < 256; h++)
             {
-                
-                //ogni 10 log fa la media del tempo di inserimento e la inserisce nel dictionary delle medie
-                if (i % STEP == 0)
+                for (int p = 0; p < 64 * h; p++)
+                    TraceLog.Write(new Log(LogLevel.DEBUG, "01/03/2018 11:36:25	GenericRegulator	REG-PRESS-FLUX-P2	False	Regolatore Arrestato.	1	5"));
+
+                //if (h % STEP == 0)
                 {
-                    j = 0;
-                    //e sceglie anche un nuovo tempo di attesa random
-                    timeToSleep = new Random().Next(10, 5000);
-                    //every 100 logs (STEP) perform the flush operation and keep track of the time needed
-                    //until the collection reaches the desired size
-                    Timer_Elapsed(null, null);
-                    
+                    s.Restart();
+                    long batchSize = LogManager.TraceLog.Flush();
+                    s.Stop();
+                    double time = s.Elapsed.TotalMilliseconds;
+                    //string measure = "bytes";
+                    long t = LogManager.TraceLog.CurrentDBSize();
+                    PreviousBatchSize += batchSize;
+
+                    File.AppendAllText(path, batchSize + ", " + time.ToString().Replace(",", ".") + ", " + t + "\n");
+                    Console.WriteLine("flushed " + batchSize + " logs in " + time + " ms with size: " + t + " bytes");
+
 
                 }
 
-                //has to keep incrementing the batch size so it fills until reaches the previous and then provides with new logs
-                while(j < PreviousBatchSize)
-                {
-                    LogManager.TraceLog.Write(new Log(LogLevel.DEBUG, "01/03/2018 11:36:25	GenericRegulator	REG-PRESS-FLUX-P2	False	Regolatore Arrestato.	1	5"));
-                    j++;
-                    
-                }
-                Thread.Sleep(timeToSleep);
-                Log l = new Log(LogLevel.DEBUG, "01/03/2018 11:36:25	GenericRegulator	REG-PRESS-FLUX-P2	False	Regolatore Arrestato.	1	5");
 
-                LogManager.TraceLog.Write(l);
-
-
-                i++;
             }
+
             //sw.WriteLine("thread: " + tmp.ToString().Remove(6) + " finished @time: " + s.ElapsedMilliseconds);
             //Console.WriteLine("thread: " + tmp.ToString().Remove(6) + " finished @time: " + s.ElapsedMilliseconds);
 
